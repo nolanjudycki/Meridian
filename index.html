@@ -104,6 +104,10 @@ body{min-height:100vh;background:radial-gradient(1200px 600px at 50% -10%,#232c5
         <li>Paste it below</li>
       </ol>
       <input class="keyBox" id="keyInput" type="password" placeholder="sk-ant-..." autocomplete="off" />
+      <p style="color:#cfd6ea;margin-bottom:8px;margin-top:14px">Your private profile — who you are intellectually, what you're building, how you want things explained. Stored only on this device; it personalizes every piece.</p>
+      <textarea class="importBox" id="profileInput" placeholder="About you…"></textarea>
+      <p style="color:#cfd6ea;margin-bottom:8px">Your life contexts, one per line — projects, work, family, routines. Reflections get grounded in these.</p>
+      <textarea class="importBox" id="contextsInput" placeholder="one context per line…"></textarea>
       <div class="center"><button class="btn gold" id="keySave">Begin</button></div>
       <div class="err" id="keyErr"></div>
     </div>
@@ -152,27 +156,27 @@ body{min-height:100vh;background:radial-gradient(1200px 600px at 50% -10%,#232c5
   <!-- RITUAL -->
   <section id="secRitual" class="hidden">
     <div class="guide dark">
-      <h2>How to run Meridian, Nolan</h2>
+      <h2>How to run Meridian</h2>
 
       <h3>Choose your voice</h3>
       <p><em id="activeVoice">Active voice: detecting…</em></p>
-      <p>These are the voices on your device, ranked most natural first. In Safari your downloaded premium voices (Ava Premium) are available — unlike inside the Claude app. Tap a name to choose; tap Hear to preview.</p>
+      <p>These are the voices on your device, ranked most natural first. In Safari your downloaded premium voices are available. Tap a name to choose; tap Hear to preview.</p>
       <div id="voiceList"></div>
 
       <h3>The rhythm</h3>
-      <p>Your four daily pings — <em>8:00, noon, 3:30, 7:30</em> — each mean one ~3-minute draw. Four draws lands you in your 10–15 minute window. The morning draw pairs with your guitar-and-music anchor: read one piece, then play.</p>
+      <p>Pair Meridian with recurring phone reminders — a handful of short draws spread through the day. Each piece is a ~3-minute read, so four draws fills a 10–15 minute daily window without ever feeling like homework.</p>
 
       <h3>What the formats are for</h3>
-      <p><em>The ladder</em> (five-year-old → expert) rebuilds one concept from first principles. <em>Mentor studies</em> distill the documented thinking of the people on your shelf. <em>Contemplations</em> are seeds for journaling — take the good ones into Claude and go deep. <em>Micro-lessons</em> end with a concrete action, where the $10k/month goal lives or dies on small daily moves.</p>
+      <p><em>The ladder</em> (five-year-old → expert) rebuilds one concept from first principles. <em>Mentor studies</em> distill the documented thinking of great minds, one idea at a time. <em>Contemplations</em> are seeds for journaling — take the good ones into a deeper conversation. <em>Micro-lessons</em> end with a concrete action for today.</p>
 
       <h3>How it's tuned to you</h3>
-      <p>The generator knows your intellectual profile and your last 40 topics — it's instructed to never repeat itself, to skip the over-taught greatest hits, and to stay honest: established science and symbolic tradition are kept distinct, because you asked to be challenged, not validated.</p>
+      <p>The generator reads your private profile (stored only on this device), remembers your last 40 topics so it never repeats itself, skips the over-taught greatest hits, and keeps established science distinct from symbolic tradition.</p>
 
       <h3>The library is the point</h3>
       <p>Save what resonates. Over months this becomes a curriculum curated by your own attention. Prune it — removing is as much curation as saving.</p>
 
       <h3>Settings</h3>
-      <p><button class="mini listen" id="changeKey">Change API key</button></p>
+      <p><button class="mini listen" id="changeKey">Edit profile &amp; API key</button></p>
     </div>
   </section>
 
@@ -199,17 +203,8 @@ const DOMAINS = [
   "Rhetoric, persuasion & leadership",
 ];
 const FORMATS = ["ladder", "mentor", "reflection", "lesson"];
-const CONTEXTS = [
-  "Frequency Realms — his VR meditation experience (sacred geometry visuals, healing-frequency audio)",
-  "Clarity Echo — his ambient/binaural music alias, built as passive income",
-  "Benny Beaver and the Honey Dream — his nearly finished children's picture book about trusting inner joy over inherited shoulds",
-  "his live band — playing guitar alongside his father at real gigs",
-  "his day job — product manager on an options trading platform, leading cross-functional teams",
-  "the backyard garden he built by hand",
-  "his family life — a wife and two young kids, and his goal of creative financial freedom for them",
-  "his morning ritual of guitar and music before the day starts",
-];
-const PROFILE = `The reader: a systems-thinking product manager and lifelong creator. Deeply read in Hermetic philosophy (the Kybalion), Carl Jung (individuation, shadow, synchronicity), Alan Watts, Thomas Campbell's My Big TOE, Terence McKenna, the Stoics (Marcus Aurelius, Seneca, Epictetus), Einstein, Tesla, Buffett and Munger, Steve Jobs. He builds things: a VR meditation experience around healing frequencies and sacred geometry, ambient binaural music, a children's picture book, and he plays guitar in a band. His goal is financial freedom through creative work. He wants mechanistic, why-level explanations — assume intelligence, skip the surface take. When natural, connect ideas across domains; he thinks like a polymath. When covering metaphysics, astrology, or frequency topics, treat them as rich symbolic and philosophical traditions but stay intellectually honest: distinguish established science from speculation — he explicitly prefers being challenged over being validated. His active projects: Frequency Realms (VR meditation), Clarity Echo (ambient/binaural music), "Benny Beaver and the Honey Dream" (children's book), a live band with his father, a hand-built backyard garden, and a day job as PM on an options trading platform.`;
+const DEFAULT_PROFILE = `The reader: a curious, intelligent generalist who wants mechanistic, why-level explanations across philosophy, science, art, and money. Assume intelligence, skip the surface take. When natural, connect ideas across domains. Stay intellectually honest: distinguish established science from symbolic or speculative traditions.`;
+const DEFAULT_CONTEXTS = ["daily work", "family life", "a creative project", "the morning routine"];
 
 // ————— storage (localStorage — native, persists on this device) —————
 const S = {
@@ -218,6 +213,8 @@ const S = {
 };
 
 let apiKey = S.get("key", null);
+let profile = S.get("profile", null) || DEFAULT_PROFILE;
+let contexts = S.get("contexts", null) || DEFAULT_CONTEXTS;
 let library = S.get("library", []);
 let recentTopics = S.get("topics", []);
 let voiceName = S.get("voice", null);
@@ -251,7 +248,7 @@ document.getElementById("dateLine").textContent =
 function buildPrompt(domain, format, grounds, avoid) {
   const avoidLine = avoid && avoid.length
     ? `\nAlready covered — do NOT repeat these ideas or near-variants of them: ${avoid.join("; ")}.` : "";
-  const base = `You are the curator of a private daily learning ritual. ${PROFILE}
+  const base = `You are the curator of a private daily learning ritual. ${profile}
 
 Write one short piece (a 2-3 minute read, roughly 220-300 words across the blocks) in the domain: "${domain}". Keep it tight.
 ${avoidLine}
@@ -273,7 +270,7 @@ Respond ONLY with raw JSON, no preamble, no markdown fences, matching exactly:
 async function generatePiece() {
   const domain = DOMAINS[Math.floor(Math.random() * DOMAINS.length)];
   const format = FORMATS[Math.floor(Math.random() * FORMATS.length)];
-  const grounds = [...CONTEXTS].sort(() => Math.random() - 0.5).slice(0, 2).join("; ");
+  const grounds = [...contexts].sort(() => Math.random() - 0.5).slice(0, 2).join("; ");
   let res;
   try {
     res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -358,8 +355,21 @@ function updateActiveVoiceLabel() {
   document.getElementById("activeVoice").textContent =
     "Active voice: " + (v ? v.name : "system default (no voices detected yet)");
 }
+// ————— wake lock: keep the screen on while audio plays —————
+let wakeLock = null;
+async function acquireWakeLock() {
+  try { if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); } catch (e) {}
+}
+function releaseWakeLock() {
+  try { if (wakeLock) wakeLock.release(); } catch (e) {}
+  wakeLock = null;
+}
+document.addEventListener("visibilitychange", () => {
+  if (speakingId && document.visibilityState === "visible") acquireWakeLock();
+});
+
 function splitSentences(t) { return t.match(/[^.?!]+[.?!]+["')\]]?\s*|[^.?!]+$/g) || [t]; }
-function stopSpeech() { if (window.speechSynthesis) window.speechSynthesis.cancel(); speakingId = null; refreshListenLabels(); }
+function stopSpeech() { if (window.speechSynthesis) window.speechSynthesis.cancel(); speakingId = null; releaseWakeLock(); refreshListenLabels(); }
 function speak(p) {
   const synth = window.speechSynthesis;
   if (!synth) return;
@@ -373,12 +383,13 @@ function speak(p) {
   updateActiveVoiceLabel();
   let remaining = parts.filter(Boolean).length;
   speakingId = p.savedAt;
+  acquireWakeLock();
   refreshListenLabels();
   parts.filter(Boolean).forEach(t => {
     const u = new SpeechSynthesisUtterance(t);
     if (v) u.voice = v;
     u.rate = 0.92;
-    const done = () => { remaining--; if (remaining <= 0) { speakingId = null; refreshListenLabels(); } };
+    const done = () => { remaining--; if (remaining <= 0) { speakingId = null; releaseWakeLock(); refreshListenLabels(); } };
     u.onend = done; u.onerror = done;
     synth.speak(u);
   });
@@ -527,11 +538,25 @@ document.getElementById("importBtn").onclick = () => {
 };
 document.getElementById("keySave").onclick = () => {
   const k = document.getElementById("keyInput").value.trim();
-  if (!k.startsWith("sk-ant-")) { document.getElementById("keyErr").textContent = "That doesn't look like an Anthropic key (should start with sk-ant-)."; return; }
-  apiKey = k; S.set("key", k); show("emptyState");
+  if (k) {
+    if (!k.startsWith("sk-ant-")) { document.getElementById("keyErr").textContent = "That doesn't look like an Anthropic key (should start with sk-ant-)."; return; }
+    apiKey = k; S.set("key", k);
+  } else if (!apiKey) {
+    document.getElementById("keyErr").textContent = "Paste your API key to begin."; return;
+  }
+  const pv = document.getElementById("profileInput").value.trim();
+  profile = pv || DEFAULT_PROFILE;
+  S.set("profile", profile);
+  const cv = document.getElementById("contextsInput").value.split("\n").map(s => s.trim()).filter(Boolean);
+  contexts = cv.length ? cv : DEFAULT_CONTEXTS;
+  S.set("contexts", contexts);
+  show("emptyState");
 };
 document.getElementById("changeKey").onclick = () => {
-  apiKey = null; S.set("key", null);
+  document.getElementById("keyInput").value = "";
+  document.getElementById("keyInput").placeholder = apiKey ? "leave blank to keep current key" : "sk-ant-...";
+  document.getElementById("profileInput").value = profile === DEFAULT_PROFILE ? "" : profile;
+  document.getElementById("contextsInput").value = contexts.join("\n");
   setTab("today"); show("setup");
 };
 function setTab(name) {
