@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="theme-color" content="#141a33" />
+<title>Meridian</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&display=swap');
+:root{--night:#141a33;--deep:#1d2547;--parch:#eae3cf;--ink:#20263f;--gold:#c9a338;--slate:#8b99c4}
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;background:radial-gradient(1200px 600px at 50% -10%,#232c55 0%,var(--night) 60%) fixed;color:var(--parch);font-family:'Inter',sans-serif;padding:0 0 96px;-webkit-font-smoothing:antialiased}
+.head{display:flex;flex-direction:column;align-items:center;gap:10px;padding:48px 24px 8px;color:var(--gold)}
+.wordmark{font-family:'Cormorant Garamond',serif;font-size:30px;letter-spacing:.32em;text-transform:uppercase;color:var(--parch);font-weight:500}
+.date{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--slate)}
+.tabs{display:flex;justify-content:center;gap:6px;margin:26px 0 18px;flex-wrap:wrap}
+.tab{background:none;border:1px solid transparent;color:var(--slate);font:600 12px 'Inter';letter-spacing:.14em;text-transform:uppercase;padding:9px 16px;border-radius:999px;cursor:pointer}
+.tab.on{color:var(--gold);border-color:rgba(201,163,56,.45)}
+.stage{max-width:640px;margin:0 auto;padding:0 20px}
+.empty{display:flex;flex-direction:column;align-items:center;gap:22px;padding:56px 0;text-align:center}
+.empty p{color:var(--slate);font-size:15px;line-height:1.6;max-width:300px}
+.drawBtn{display:flex;flex-direction:column;align-items:center;gap:14px;background:none;border:none;color:var(--gold);cursor:pointer}
+.drawBtn span{font:600 12px 'Inter';letter-spacing:.2em;text-transform:uppercase}
+.seal{color:var(--gold)}
+@media (prefers-reduced-motion: no-preference){
+  .spin{animation:rot 5s linear infinite}
+  @keyframes rot{to{transform:rotate(360deg)}}
+  .plate{animation:rise .5s ease both}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1}}
+}
+.plate{background:var(--parch);color:var(--ink);border-radius:6px;padding:30px 26px 26px;box-shadow:0 24px 60px rgba(0,0,0,.45)}
+.eyebrow{font:600 10.5px 'Inter';letter-spacing:.22em;text-transform:uppercase;color:#8a6d1f;margin-bottom:12px}
+.title{font-family:'Cormorant Garamond',serif;font-size:31px;line-height:1.12;font-weight:600;margin-bottom:20px}
+.blk-label{font:600 11px 'Inter';letter-spacing:.18em;text-transform:uppercase;color:#8a6d1f;margin-bottom:7px}
+.blk-text{font-size:15.5px;line-height:1.72;white-space:pre-wrap}
+.blk+.blk{margin-top:20px}
+.refl{margin-top:24px;border-left:2px solid var(--gold);padding:4px 0 4px 16px;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:19px;line-height:1.5}
+.ground{margin-top:12px;padding-left:18px;font-size:14.5px;line-height:1.72;color:#3a4160}
+.dark .ground{color:#cfd6ea}
+.actions{display:flex;gap:10px;margin-top:18px;justify-content:center;flex-wrap:wrap}
+.btn{font:600 12px 'Inter';letter-spacing:.14em;text-transform:uppercase;padding:12px 22px;border-radius:999px;cursor:pointer;border:1px solid rgba(234,227,207,.35);background:none;color:var(--parch)}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:#181c30}
+.btn:disabled{opacity:.55;cursor:default}
+.err{color:#e0a1a1;text-align:center;font-size:14px;margin-top:14px;line-height:1.5}
+.status{text-align:center;font-size:11px;letter-spacing:.16em;text-transform:uppercase;margin-bottom:14px;color:#8fbf8f}
+.card{width:100%;text-align:left;background:var(--deep);border:1px solid rgba(139,153,196,.18);border-radius:6px;padding:16px 18px;color:var(--parch);cursor:pointer;font-family:'Inter';margin-bottom:10px}
+.card .t{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;line-height:1.2}
+.card .m{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--slate);margin-top:5px}
+.inlineBtns{display:flex;gap:16px;margin-top:12px;flex-wrap:wrap}
+.mini{background:none;border:none;font:600 11px 'Inter';letter-spacing:.12em;text-transform:uppercase;cursor:pointer;padding:0}
+.mini.listen{color:var(--gold)}
+.mini.del{color:#c98a8a}
+.libEmpty{text-align:center;color:var(--slate);font-size:15px;line-height:1.6;padding:48px 20px}
+.guide{background:var(--deep);border:1px solid rgba(139,153,196,.18);border-radius:6px;padding:26px 24px;font-size:15px;line-height:1.75}
+.guide h2{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;margin-bottom:14px}
+.guide h3{font:600 11px 'Inter';letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin:22px 0 8px}
+.guide p{margin-bottom:12px;color:#cfd6ea}
+.guide em{color:var(--parch)}
+.backupRow{display:flex;justify-content:center;gap:22px;margin-bottom:16px}
+.importBox,.keyBox{width:100%;min-height:60px;background:var(--night);border:1px solid rgba(139,153,196,.3);border-radius:6px;color:var(--parch);padding:12px;font:400 13px monospace;margin-bottom:10px}
+.importBox{min-height:110px}
+.voiceRow{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.voiceRow .voiceBtn{flex:1;text-align:left;background:var(--night);border:1px solid rgba(139,153,196,.25);border-radius:6px;color:var(--parch);padding:10px 14px;font:500 14px 'Inter';cursor:pointer}
+.voiceRow .voiceBtn.on{border-color:var(--gold);color:var(--gold)}
+.voiceLang{font-size:11px;color:var(--slate);margin-left:6px}
+.hidden{display:none}
+.banner{background:#5a2f2f;color:#f2d7d7;text-align:center;padding:14px 18px;font-size:14px;line-height:1.5}
+.setup{background:var(--deep);border:1px solid rgba(139,153,196,.25);border-radius:6px;padding:26px 24px;font-size:15px;line-height:1.7}
+.setup h2{font-family:'Cormorant Garamond',serif;font-size:24px;margin-bottom:12px}
+.setup ol{margin:0 0 16px 20px;color:#cfd6ea}
+.setup li{margin-bottom:8px}
+.setup a{color:var(--gold)}
+.center{text-align:center}
+</style>
+</head>
+<body>
+<div id="sandboxBanner" class="banner hidden">This file is meant to run in Safari, not inside Claude. Download it, host it (see chat instructions), and open it in your browser.</div>
+
+<header class="head">
+  <svg id="sealTop" width="44" height="44" viewBox="0 0 44 44" class="seal" aria-hidden="true"></svg>
+  <div class="wordmark">Meridian</div>
+  <div class="date" id="dateLine"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab on" id="tabToday">Today</button>
+  <button class="tab" id="tabLibrary">Library · <span id="libCount">0</span></button>
+  <button class="tab" id="tabRitual">The Ritual</button>
+</nav>
+
+<main class="stage">
+
+  <!-- TODAY -->
+  <section id="secToday">
+    <div id="setup" class="setup hidden">
+      <h2>One-time setup</h2>
+      <p style="color:#cfd6ea;margin-bottom:12px">Meridian runs on your own Anthropic API key, stored only in this browser on this device — never in the file, never sent anywhere except to Anthropic.</p>
+      <ol>
+        <li>Create an account at <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a></li>
+        <li>Add a small credit balance (a few dollars lasts months)</li>
+        <li>Go to API Keys → Create Key → copy it</li>
+        <li>Paste it below</li>
+      </ol>
+      <input class="keyBox" id="keyInput" type="password" placeholder="sk-ant-..." autocomplete="off" />
+      <div class="center"><button class="btn gold" id="keySave">Begin</button></div>
+      <div class="err" id="keyErr"></div>
+    </div>
+
+    <div id="emptyState" class="empty hidden">
+      <p>A few minutes of physics, wisdom, geometry, art, or money — drawn fresh each time you return.</p>
+      <button class="drawBtn" id="drawBtn">
+        <svg id="sealBig" width="84" height="84" viewBox="0 0 84 84" class="seal" aria-hidden="true"></svg>
+        <span>Draw a piece</span>
+      </button>
+      <div class="err" id="drawErr"></div>
+    </div>
+
+    <div id="loadingState" class="empty hidden">
+      <svg id="sealSpin" width="84" height="84" viewBox="0 0 84 84" class="seal spin" aria-hidden="true"></svg>
+      <p>Composing…</p>
+    </div>
+
+    <div id="pieceView" class="hidden">
+      <article class="plate" id="plate"></article>
+      <div class="actions">
+        <button class="btn gold" id="saveBtn">Save to library</button>
+        <button class="btn" id="listenBtn">Listen</button>
+        <button class="btn" id="noteBtn">Save as note</button>
+        <button class="btn" id="againBtn">Draw another</button>
+      </div>
+      <div class="err" id="pieceErr"></div>
+    </div>
+  </section>
+
+  <!-- LIBRARY -->
+  <section id="secLibrary" class="hidden">
+    <div class="status">Library saved on this device — persists between sessions</div>
+    <div class="backupRow">
+      <button class="mini listen" id="exportBtn">Export backup</button>
+      <button class="mini listen" id="importToggle">Import backup</button>
+    </div>
+    <div id="importArea" class="hidden" style="margin-bottom:16px">
+      <textarea class="importBox" id="importText" placeholder="Paste your exported backup here"></textarea>
+      <div class="center"><button class="btn gold" id="importBtn">Merge into library</button></div>
+    </div>
+    <div id="libList"></div>
+    <div class="err" id="libErr"></div>
+  </section>
+
+  <!-- RITUAL -->
+  <section id="secRitual" class="hidden">
+    <div class="guide dark">
+      <h2>How to run Meridian, Nolan</h2>
+
+      <h3>Choose your voice</h3>
+      <p><em id="activeVoice">Active voice: detecting…</em></p>
+      <p>These are the voices on your device, ranked most natural first. In Safari your downloaded premium voices (Ava Premium) are available — unlike inside the Claude app. Tap a name to choose; tap Hear to preview.</p>
+      <div id="voiceList"></div>
+
+      <h3>The rhythm</h3>
+      <p>Your four daily pings — <em>8:00, noon, 3:30, 7:30</em> — each mean one ~3-minute draw. Four draws lands you in your 10–15 minute window. The morning draw pairs with your guitar-and-music anchor: read one piece, then play.</p>
+
+      <h3>What the formats are for</h3>
+      <p><em>The ladder</em> (five-year-old → expert) rebuilds one concept from first principles. <em>Mentor studies</em> distill the documented thinking of the people on your shelf. <em>Contemplations</em> are seeds for journaling — take the good ones into Claude and go deep. <em>Micro-lessons</em> end with a concrete action, where the $10k/month goal lives or dies on small daily moves.</p>
+
+      <h3>How it's tuned to you</h3>
+      <p>The generator knows your intellectual profile and your last 40 topics — it's instructed to never repeat itself, to skip the over-taught greatest hits, and to stay honest: established science and symbolic tradition are kept distinct, because you asked to be challenged, not validated.</p>
+
+      <h3>The library is the point</h3>
+      <p>Save what resonates. Over months this becomes a curriculum curated by your own attention. Prune it — removing is as much curation as saving.</p>
+
+      <h3>Settings</h3>
+      <p><button class="mini listen" id="changeKey">Change API key</button></p>
+    </div>
+  </section>
+
+</main>
+
+<script>
+// ————— Meridian standalone — runs on your own Anthropic API key —————
+
+const DOMAINS = [
+  "Stoic & Hermetic timeless wisdom",
+  "Eastern philosophy — Taoism, Zen, Vedanta",
+  "Modern physics & cosmology",
+  "Consciousness & metaphysics",
+  "Sacred geometry, number & harmonics",
+  "Mathematics & the patterns beneath things",
+  "Astrology & archetypal psychology",
+  "Depth psychology & the workings of the mind",
+  "Neuroscience, habits & human performance",
+  "Art & the craft of creating",
+  "Music theory & the physics of sound",
+  "Financial literacy & freedom",
+  "History's great inventors, builders & turning points",
+  "Complexity, systems & emergence",
+  "Rhetoric, persuasion & leadership",
+];
+const FORMATS = ["ladder", "mentor", "reflection", "lesson"];
+const CONTEXTS = [
+  "Frequency Realms — his VR meditation experience (sacred geometry visuals, healing-frequency audio)",
+  "Clarity Echo — his ambient/binaural music alias, built as passive income",
+  "Benny Beaver and the Honey Dream — his nearly finished children's picture book about trusting inner joy over inherited shoulds",
+  "his live band — playing guitar alongside his father at real gigs",
+  "his day job — product manager on an options trading platform, leading cross-functional teams",
+  "the backyard garden he built by hand",
+  "his family life — a wife and two young kids, and his goal of creative financial freedom for them",
+  "his morning ritual of guitar and music before the day starts",
+];
+const PROFILE = `The reader: a systems-thinking product manager and lifelong creator. Deeply read in Hermetic philosophy (the Kybalion), Carl Jung (individuation, shadow, synchronicity), Alan Watts, Thomas Campbell's My Big TOE, Terence McKenna, the Stoics (Marcus Aurelius, Seneca, Epictetus), Einstein, Tesla, Buffett and Munger, Steve Jobs. He builds things: a VR meditation experience around healing frequencies and sacred geometry, ambient binaural music, a children's picture book, and he plays guitar in a band. His goal is financial freedom through creative work. He wants mechanistic, why-level explanations — assume intelligence, skip the surface take. When natural, connect ideas across domains; he thinks like a polymath. When covering metaphysics, astrology, or frequency topics, treat them as rich symbolic and philosophical traditions but stay intellectually honest: distinguish established science from speculation — he explicitly prefers being challenged over being validated. His active projects: Frequency Realms (VR meditation), Clarity Echo (ambient/binaural music), "Benny Beaver and the Honey Dream" (children's book), a live band with his father, a hand-built backyard garden, and a day job as PM on an options trading platform.`;
+
+// ————— storage (localStorage — native, persists on this device) —————
+const S = {
+  get(k, fallback) { try { const v = localStorage.getItem("mer_" + k); return v === null ? fallback : JSON.parse(v); } catch (e) { return fallback; } },
+  set(k, v) { try { localStorage.setItem("mer_" + k, JSON.stringify(v)); return true; } catch (e) { return false; } },
+};
+
+let apiKey = S.get("key", null);
+let library = S.get("library", []);
+let recentTopics = S.get("topics", []);
+let voiceName = S.get("voice", null);
+let piece = null;
+let speakingId = null;
+let voices = [];
+
+// ————— sandbox detection (running inside Claude instead of Safari) —————
+try { localStorage.setItem("mer_probe", "1"); localStorage.removeItem("mer_probe"); }
+catch (e) { document.getElementById("sandboxBanner").classList.remove("hidden"); }
+
+// ————— seal svg —————
+function drawSeal(el, size) {
+  const r = size / 4.4, c = size / 2;
+  let s = `<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="currentColor" stroke-width="1"/>`;
+  [0,60,120,180,240,300].forEach(a => {
+    const x = c + r * Math.cos(a * Math.PI / 180), y = c + r * Math.sin(a * Math.PI / 180);
+    s += `<circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="currentColor" stroke-width="1"/>`;
+  });
+  s += `<circle cx="${c}" cy="${c}" r="${c-1.5}" fill="none" stroke="currentColor" stroke-width="1" opacity="0.5"/>`;
+  el.innerHTML = s;
+}
+drawSeal(document.getElementById("sealTop"), 44);
+drawSeal(document.getElementById("sealBig"), 84);
+drawSeal(document.getElementById("sealSpin"), 84);
+
+document.getElementById("dateLine").textContent =
+  new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+
+// ————— prompt + generation —————
+function buildPrompt(domain, format, grounds, avoid) {
+  const avoidLine = avoid && avoid.length
+    ? `\nAlready covered — do NOT repeat these ideas or near-variants of them: ${avoid.join("; ")}.` : "";
+  const base = `You are the curator of a private daily learning ritual. ${PROFILE}
+
+Write one short piece (a 2-3 minute read, roughly 220-300 words across the blocks) in the domain: "${domain}". Keep it tight.
+${avoidLine}
+Choose ONE specific, non-obvious concept within the domain. Deliberately skip the domain's over-taught greatest hits (the dichotomy of control, the golden ratio, compound interest, the double-slit experiment, and their kin) unless you can reveal a genuinely unfamiliar layer of them. Favor second-layer ideas, overlooked figures, and cross-disciplinary bridges — expand the reader's horizons, don't confirm what he already knows.
+
+Respond ONLY with raw JSON, no preamble, no markdown fences, matching exactly:
+{"title": string, "domain": string, "minutes": number, "blocks": [{"label": string, "text": string}], "reflection": string, "grounding": string}
+
+"reflection" is one probing question the reader can sit with today. "grounding" makes the question non-cryptic: 3-5 sentences with at least two specific, concrete examples of what acting on it would look like this week, drawn from these contexts of his life: ${grounds}. Use whichever genuinely fits — never force a project reference; ordinary life is often the better ground.`;
+  const byFormat = {
+    ladder: `Format: a four-rung explanation ladder on ONE specific concept. Exactly 4 blocks with labels "To a five-year-old", "To anyone", "To a student of it", "To an expert". Each rung deepens the last; the expert rung should be genuinely rigorous.`,
+    mentor: `Format: mentor study. Choose one relevant figure and distill their real, documented thinking on one idea in this domain. 2-3 blocks (e.g. "The idea", "How they lived it", "How to use it"). Summarize their actual ideas — do NOT invent verbatim quotes.`,
+    reflection: `Format: contemplation. 2 blocks: "The seed" (a short provocative framing of one idea) and "The sit" (guidance for a few minutes of genuine reflection on it).`,
+    lesson: `Format: practical micro-lesson with a concrete action. 3 blocks: "The principle", "Why it works", "Do this today".`,
+  };
+  return base + "\n\n" + byFormat[format];
+}
+
+async function generatePiece() {
+  const domain = DOMAINS[Math.floor(Math.random() * DOMAINS.length)];
+  const format = FORMATS[Math.floor(Math.random() * FORMATS.length)];
+  const grounds = [...CONTEXTS].sort(() => Math.random() - 0.5).slice(0, 2).join("; ");
+  let res;
+  try {
+    res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1200,
+        messages: [{ role: "user", content: buildPrompt(domain, format, grounds, recentTopics) }],
+      }),
+    });
+  } catch (e) { throw new Error("network — " + (e.message || "request failed")); }
+  let bodyText = await res.text();
+  if (!bodyText || !bodyText.trim()) throw new Error(`empty response (HTTP ${res.status})`);
+  let data;
+  try { data = JSON.parse(bodyText); }
+  catch (e) { throw new Error(`decode (HTTP ${res.status}) — server sent non-JSON`); }
+  if (data.error) throw new Error(data.error.message || "API error — check your key and credit balance");
+  const text = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n");
+  const clean = text.replace(/```json|```/g, "").trim();
+  const start = clean.indexOf("{"), end = clean.lastIndexOf("}");
+  if (start === -1 || end <= start) throw new Error("response was cut off — draw again");
+  const raw = clean.slice(start, end + 1);
+  let p;
+  try { p = JSON.parse(raw); }
+  catch (e) {
+    try { p = JSON.parse(raw.replace(/[\u0000-\u001F]+/g, " ")); }
+    catch (e2) { throw new Error("parse — malformed piece"); }
+  }
+  p.savedAt = Date.now();
+  p.format = format;
+  return p;
+}
+
+// ————— voices —————
+function scoreVoice(v) {
+  let s = 0; const n = v.name.toLowerCase();
+  if (/ava/.test(n)) s += 12;
+  if (/premium/.test(n)) s += 10;
+  if (/enhanced|natural|neural/.test(n)) s += 8;
+  if (/zoe|samantha|allison|evan|nathan|joelle|tom|daniel|serena|karen|moira/.test(n)) s += 4;
+  if (/google (us|uk) english/.test(n)) s += 5;
+  if (v.lang && v.lang.toLowerCase().startsWith("en")) s += 3;
+  if (/compact|espeak|robot/.test(n)) s -= 6;
+  return s;
+}
+function gatherVoices() {
+  const vs = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+  if (!vs.length) return false;
+  const en = vs.filter(v => v.lang && v.lang.toLowerCase().startsWith("en"))
+    .sort((a,b) => scoreVoice(b) - scoreVoice(a)).slice(0, 12);
+  voices = en.length ? en : vs.slice(0, 12);
+  renderVoices();
+  updateActiveVoiceLabel();
+  return true;
+}
+let vTries = 0;
+const vIv = setInterval(() => { vTries++; if (gatherVoices() || vTries > 20) clearInterval(vIv); }, 500);
+gatherVoices();
+if (window.speechSynthesis && window.speechSynthesis.addEventListener)
+  window.speechSynthesis.addEventListener("voiceschanged", gatherVoices);
+
+function resolveVoice() {
+  const synth = window.speechSynthesis;
+  const fresh = synth ? synth.getVoices() : [];
+  const pool = fresh.length ? fresh : voices;
+  if (!pool.length) return null;
+  const byName = voiceName ? pool.find(v => v.name === voiceName) : null;
+  const avaP = pool.find(v => /ava/i.test(v.name) && /premium/i.test(v.name));
+  const ava = pool.find(v => /\bava\b/i.test(v.name));
+  const best = [...pool].filter(v => v.lang && v.lang.toLowerCase().startsWith("en"))
+    .sort((a,b) => scoreVoice(b) - scoreVoice(a))[0] || pool[0];
+  return byName || avaP || ava || best;
+}
+function updateActiveVoiceLabel() {
+  const v = resolveVoice();
+  document.getElementById("activeVoice").textContent =
+    "Active voice: " + (v ? v.name : "system default (no voices detected yet)");
+}
+function splitSentences(t) { return t.match(/[^.?!]+[.?!]+["')\]]?\s*|[^.?!]+$/g) || [t]; }
+function stopSpeech() { if (window.speechSynthesis) window.speechSynthesis.cancel(); speakingId = null; refreshListenLabels(); }
+function speak(p) {
+  const synth = window.speechSynthesis;
+  if (!synth) return;
+  if (speakingId === p.savedAt) { stopSpeech(); return; }
+  synth.cancel();
+  const parts = [p.title + "."];
+  (p.blocks || []).forEach(b => { parts.push(b.label + "."); splitSentences(b.text).forEach(s => parts.push(s.trim())); });
+  if (p.reflection) { parts.push("A question to sit with."); splitSentences(p.reflection).forEach(s => parts.push(s.trim())); }
+  if (p.grounding) splitSentences(p.grounding).forEach(s => parts.push(s.trim()));
+  const v = resolveVoice();
+  updateActiveVoiceLabel();
+  let remaining = parts.filter(Boolean).length;
+  speakingId = p.savedAt;
+  refreshListenLabels();
+  parts.filter(Boolean).forEach(t => {
+    const u = new SpeechSynthesisUtterance(t);
+    if (v) u.voice = v;
+    u.rate = 0.92;
+    const done = () => { remaining--; if (remaining <= 0) { speakingId = null; refreshListenLabels(); } };
+    u.onend = done; u.onerror = done;
+    synth.speak(u);
+  });
+}
+function refreshListenLabels() {
+  const lb = document.getElementById("listenBtn");
+  if (piece) lb.textContent = speakingId === piece.savedAt ? "Stop audio" : "Listen";
+  renderLibrary();
+}
+
+// ————— notes / backup —————
+function pieceToText(p) {
+  return [p.title, `${p.domain} · ${p.minutes || 3} min`, "",
+    ...(p.blocks || []).flatMap(b => [b.label.toUpperCase(), b.text, ""]),
+    p.reflection ? "QUESTION\n" + p.reflection : "", p.grounding || ""]
+    .join("\n").replace(/\n{3,}/g, "\n\n");
+}
+async function shareNote(p) {
+  const text = pieceToText(p);
+  if (navigator.share) {
+    try { await navigator.share({ title: p.title, text }); return; }
+    catch (e) { if (e && e.name === "AbortError") return; }
+  }
+  try { await navigator.clipboard.writeText(text); alert("Copied — paste into Notes."); }
+  catch (e) { window.prompt("Copy this piece:", text); }
+}
+
+// ————— library —————
+function persistLibrary() { S.set("library", library); document.getElementById("libCount").textContent = library.length; }
+function renderLibrary() {
+  const el = document.getElementById("libList");
+  document.getElementById("libCount").textContent = library.length;
+  if (!library.length) { el.innerHTML = '<div class="libEmpty">Nothing kept yet. Pieces you save from Today will collect here — a scrollable record of your own curriculum.</div>'; return; }
+  el.innerHTML = "";
+  library.forEach(p => {
+    const d = document.createElement("div");
+    d.className = "card dark";
+    d.innerHTML = `<div class="t"></div><div class="m"></div><div class="body hidden" style="margin-top:14px"></div>`;
+    d.querySelector(".t").textContent = p.title;
+    d.querySelector(".m").textContent = `${p.domain} · ${new Date(p.savedAt).toLocaleDateString()}`;
+    const body = d.querySelector(".body");
+    (p.blocks || []).forEach(b => {
+      const blk = document.createElement("div"); blk.className = "blk";
+      const l = document.createElement("div"); l.className = "blk-label"; l.style.color = "var(--gold)"; l.textContent = b.label;
+      const t = document.createElement("div"); t.className = "blk-text"; t.textContent = b.text;
+      blk.appendChild(l); blk.appendChild(t); body.appendChild(blk);
+    });
+    if (p.reflection) { const r = document.createElement("div"); r.className = "refl"; r.style.borderColor = "var(--gold)"; r.textContent = p.reflection; body.appendChild(r); }
+    if (p.grounding) { const g = document.createElement("div"); g.className = "ground"; g.style.color = "#cfd6ea"; g.textContent = p.grounding; body.appendChild(g); }
+    const row = document.createElement("div"); row.className = "inlineBtns";
+    const mk = (cls, label, fn) => { const b = document.createElement("button"); b.className = "mini " + cls; b.textContent = label; b.onclick = (e) => { e.stopPropagation(); fn(); }; return b; };
+    row.appendChild(mk("listen", speakingId === p.savedAt ? "Stop audio" : "Listen", () => speak(p)));
+    row.appendChild(mk("listen", "Note", () => shareNote(p)));
+    row.appendChild(mk("del", "Remove", () => { library = library.filter(x => x.savedAt !== p.savedAt); if (speakingId === p.savedAt) stopSpeech(); persistLibrary(); renderLibrary(); }));
+    body.appendChild(row);
+    d.onclick = () => body.classList.toggle("hidden");
+    el.appendChild(d);
+  });
+}
+
+// ————— voices UI —————
+function renderVoices() {
+  const el = document.getElementById("voiceList");
+  el.innerHTML = "";
+  if (!voices.length) { el.innerHTML = '<p style="font-style:italic;color:#cfd6ea">No voices detected yet — tap Listen on a piece once, then return here.</p>'; return; }
+  voices.forEach((v, i) => {
+    const active = (voiceName && v.name === voiceName) || (!voiceName && resolveVoice() === v);
+    const row = document.createElement("div"); row.className = "voiceRow";
+    const b = document.createElement("button"); b.className = "voiceBtn" + (active ? " on" : "");
+    b.innerHTML = `${v.name} <span class="voiceLang">${v.lang}</span>${active ? " ✓" : ""}`;
+    b.onclick = () => { voiceName = v.name; S.set("voice", voiceName); renderVoices(); updateActiveVoiceLabel(); };
+    const h = document.createElement("button"); h.className = "mini listen"; h.textContent = "Hear";
+    h.onclick = () => { const synth = window.speechSynthesis; if (!synth) return; synth.cancel();
+      const u = new SpeechSynthesisUtterance("As above, so below. This is how your daily pieces will sound.");
+      u.voice = v; u.rate = 0.92; synth.speak(u); };
+    row.appendChild(b); row.appendChild(h); el.appendChild(row);
+  });
+}
+
+// ————— today flow —————
+function show(id) { ["setup","emptyState","loadingState","pieceView"].forEach(x => document.getElementById(x).classList.toggle("hidden", x !== id)); }
+function renderPiece() {
+  const el = document.getElementById("plate");
+  el.innerHTML = "";
+  const ey = document.createElement("div"); ey.className = "eyebrow"; ey.textContent = `${piece.domain} · ${piece.minutes || 3} min`; el.appendChild(ey);
+  const h = document.createElement("h1"); h.className = "title"; h.textContent = piece.title; el.appendChild(h);
+  (piece.blocks || []).forEach(b => {
+    const blk = document.createElement("div"); blk.className = "blk";
+    const l = document.createElement("div"); l.className = "blk-label"; l.textContent = b.label;
+    const t = document.createElement("div"); t.className = "blk-text"; t.textContent = b.text;
+    blk.appendChild(l); blk.appendChild(t); el.appendChild(blk);
+  });
+  if (piece.reflection) { const r = document.createElement("div"); r.className = "refl"; r.textContent = piece.reflection; el.appendChild(r); }
+  if (piece.grounding) { const g = document.createElement("div"); g.className = "ground"; g.textContent = piece.grounding; el.appendChild(g); }
+  const sb = document.getElementById("saveBtn");
+  const saved = library.some(x => x.savedAt === piece.savedAt);
+  sb.textContent = saved ? "Saved" : "Save to library"; sb.disabled = saved;
+  document.getElementById("listenBtn").textContent = "Listen";
+  document.getElementById("pieceErr").textContent = "";
+  show("pieceView");
+}
+async function draw() {
+  stopSpeech();
+  document.getElementById("drawErr").textContent = "";
+  show("loadingState");
+  const record = (p) => { recentTopics = [...recentTopics, `${p.title} (${p.domain})`].slice(-40); S.set("topics", recentTopics); };
+  try { piece = await generatePiece(); record(piece); renderPiece(); }
+  catch (first) {
+    try { await new Promise(r => setTimeout(r, 1500)); piece = await generatePiece(); record(piece); renderPiece(); }
+    catch (e) {
+      show(piece ? "pieceView" : "emptyState");
+      const msg = `The piece didn't come through (${e.message || "unknown error"}). Draw again.`;
+      document.getElementById(piece ? "pieceErr" : "drawErr").textContent = msg;
+    }
+  }
+}
+
+// ————— wiring —————
+document.getElementById("drawBtn").onclick = draw;
+document.getElementById("againBtn").onclick = draw;
+document.getElementById("saveBtn").onclick = () => {
+  if (!piece) return;
+  library = [piece, ...library].slice(0, 200);
+  persistLibrary(); renderLibrary(); renderPiece();
+};
+document.getElementById("listenBtn").onclick = () => piece && speak(piece);
+document.getElementById("noteBtn").onclick = () => piece && shareNote(piece);
+document.getElementById("exportBtn").onclick = async () => {
+  const json = JSON.stringify(library);
+  try { await navigator.clipboard.writeText(json); alert("Backup copied to clipboard."); }
+  catch (e) { window.prompt("Copy your backup:", json); }
+};
+document.getElementById("importToggle").onclick = () => document.getElementById("importArea").classList.toggle("hidden");
+document.getElementById("importBtn").onclick = () => {
+  try {
+    const incoming = JSON.parse(document.getElementById("importText").value.trim());
+    if (!Array.isArray(incoming)) throw new Error();
+    const map = new Map();
+    [...incoming, ...library].forEach(p => p && p.savedAt && map.set(p.savedAt, p));
+    library = [...map.values()].sort((a,b) => b.savedAt - a.savedAt).slice(0, 200);
+    persistLibrary(); renderLibrary();
+    document.getElementById("importArea").classList.add("hidden");
+    document.getElementById("importText").value = "";
+    document.getElementById("libErr").textContent = "";
+  } catch (e) { document.getElementById("libErr").textContent = "That backup couldn't be read — paste the exact exported text."; }
+};
+document.getElementById("keySave").onclick = () => {
+  const k = document.getElementById("keyInput").value.trim();
+  if (!k.startsWith("sk-ant-")) { document.getElementById("keyErr").textContent = "That doesn't look like an Anthropic key (should start with sk-ant-)."; return; }
+  apiKey = k; S.set("key", k); show("emptyState");
+};
+document.getElementById("changeKey").onclick = () => {
+  apiKey = null; S.set("key", null);
+  setTab("today"); show("setup");
+};
+function setTab(name) {
+  const map = { today: "secToday", library: "secLibrary", ritual: "secRitual" };
+  Object.entries(map).forEach(([k, id]) => document.getElementById(id).classList.toggle("hidden", k !== name));
+  document.getElementById("tabToday").classList.toggle("on", name === "today");
+  document.getElementById("tabLibrary").classList.toggle("on", name === "library");
+  document.getElementById("tabRitual").classList.toggle("on", name === "ritual");
+}
+document.getElementById("tabToday").onclick = () => setTab("today");
+document.getElementById("tabLibrary").onclick = () => setTab("library");
+document.getElementById("tabRitual").onclick = () => { setTab("ritual"); gatherVoices(); };
+
+// ————— boot —————
+persistLibrary();
+renderLibrary();
+show(apiKey ? "emptyState" : "setup");
+</script>
+</body>
+</html>
